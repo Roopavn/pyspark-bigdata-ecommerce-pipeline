@@ -77,8 +77,9 @@ class Command(BaseCommand):
                     customer=customer,
                     status=statuses[index % len(statuses)],
                     total_amount=subtotal,
-                    ordered_at=timezone.now() - timedelta(days=11 - index),
                 )
+                order.ordered_at = timezone.now() - timedelta(days=11 - index)
+                order.save(update_fields=["ordered_at"])
                 OrderItem.objects.create(
                     order=order,
                     product=product,
