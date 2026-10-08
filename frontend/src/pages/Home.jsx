@@ -5,37 +5,24 @@ export default function Home({ products }) {
     <main>
       <section className="hero">
         <div>
-          <p className="eyebrow">Big Data E-Commerce Platform</p>
-          <h1>Shop today.<br /><span>Understand tomorrow.</span></h1>
-          <p className="hero-copy">
-            A full-stack store powered by Django, PostgreSQL and a PySpark
-            Bronze → Silver → Gold analytics pipeline.
-          </p>
-          <div className="hero-actions">
-            <Link to="/products" className="primary-button">Explore products</Link>
-            <Link to="/analytics" className="secondary-button">View analytics</Link>
-          </div>
+          <p className="eyebrow">Next-generation commerce</p>
+          <h1>Discover products.<br /><span>Shop smarter.</span></h1>
+          <p className="hero-copy">A production-style e-commerce experience backed by Django, PostgreSQL and a PySpark Bronze → Silver → Gold analytics platform.</p>
+          <div className="hero-actions"><Link to="/products" className="primary-button">Start shopping →</Link><Link to="/analytics" className="secondary-button">View insights</Link></div>
         </div>
-        <div className="hero-card">
-          <span>Platform flow</span>
-          <strong>Store → Orders → PySpark</strong>
-          <small>PostgreSQL → Bronze → Silver → Gold</small>
+        <div className="hero-visual">
+          <div className="visual-card main"><span>Today's store performance</span><strong className="metric">₹2.67L</strong><span>Revenue processed through the analytics pipeline</span></div>
+          <div className="visual-card small left"><span>Orders</span><strong>15</strong></div>
+          <div className="visual-card small right"><span>Customers</span><strong>11</strong></div>
         </div>
       </section>
-
       <section className="section">
-        <div className="section-heading">
-          <div><p className="eyebrow">Featured</p><h2>Latest products</h2></div>
-          <Link to="/products">View all →</Link>
-        </div>
-        <div className="feature-strip">
-          {products.slice(0, 3).map((product) => (
-            <Link className="mini-product" key={product.id} to={`/products/${product.id}`}>
-              <span>{product.category_name || "Product"}</span>
-              <strong>{product.name}</strong>
-              <b>₹{Number(product.price).toLocaleString()}</b>
-            </Link>
-          ))}
+        <div className="section-heading"><div><p className="eyebrow">Curated for you</p><h2>Trending products</h2></div><Link className="back-link" to="/products">View all →</Link></div>
+        <div className="feature-strip">{products.slice(0, 3).map((product) => <Link className="mini-product" key={product.id} to={"/products/" + product.id}><span>{product.category_name || "Featured"}</span><strong>{product.name}</strong><b>₹{Number(product.price).toLocaleString("en-IN")}</b></Link>)}</div>
+        <div className="trust-strip">
+          <div className="trust-card"><b>⚡ Fast shopping</b><span>Simple browsing and a persistent cart.</span></div>
+          <div className="trust-card"><b>🔒 Secure foundation</b><span>Django APIs and PostgreSQL-ready architecture.</span></div>
+          <div className="trust-card"><b>📊 Data-driven</b><span>Every order can feed the PySpark analytics pipeline.</span></div>
         </div>
       </section>
     </main>
