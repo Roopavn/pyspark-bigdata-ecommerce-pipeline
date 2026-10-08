@@ -77,3 +77,13 @@ h1 span { color: #667085; }
 .global-error, .error { max-width: 1200px; margin: 18px auto; padding: 12px 16px; border-radius: 10px; background: #fff0f0; color: #9b1c1c; }
 @media (max-width: 1100px) { .catalog-toolbar { grid-template-columns: repeat(3, 1fr); } }\n@media (max-width: 900px) { .hero, .detail-card, .cart-layout { grid-template-columns: 1fr; } .product-grid { grid-template-columns: repeat(2, 1fr); } .cards { grid-template-columns: repeat(2, 1fr); } .detail-image { min-height: 300px; } }
 @media (max-width: 650px) { .nav-inner { flex-direction: column; padding: 14px 18px; } nav { gap: 12px; flex-wrap: wrap; justify-content: center; } .hero, .section { padding: 36px 18px; } .feature-strip, .product-grid, .catalog-toolbar, .cards { grid-template-columns: 1fr; } .cart-item { grid-template-columns: 55px 1fr; } .cart-item > strong, .quantity, .remove-button { grid-column: 2; } }
+
+.product-image-wrap { position: relative; }
+.wishlist-button { position: absolute; top: 12px; right: 12px; width: 40px; height: 40px; padding: 0; border-radius: 50%; background: rgba(255,255,255,.94); color: #17202a; font-size: 22px; box-shadow: 0 4px 14px rgba(0,0,0,.12); }
+.wishlist-button.wishlisted { color: #ec4899; }
+.cart-thumb { width: 70px; height: 70px; object-fit: cover; }
+.coupon-box { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin: 18px 0; }
+.coupon-box input { min-width: 0; padding: 11px 12px; border: 1px solid #d9dde3; border-radius: 9px; }
+.coupon-box button { padding: 9px 13px; }
+.coupon-error { margin: -8px 0 12px; color: #b42318; font-size: 12px; }
+@media (max-width: 650px) { .cart-thumb { width: 55px; height: 55px; } }

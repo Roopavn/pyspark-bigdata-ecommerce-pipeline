@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import ProductCard from "../components/ProductCard";
 import { api } from "../services/api";
 
-export default function Products({ categories, onAdd }) {
+export default function Products({ categories, onAdd, wishlist, onToggleWishlist }) {
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
@@ -76,7 +76,7 @@ export default function Products({ categories, onAdd }) {
       {loading ? <div className="loading">Loading products...</div> : products.length ? (
         <>
           <div className="product-grid">{products.map((product) =>
-            <ProductCard key={product.id} product={product} onAdd={onAdd} />
+            <ProductCard key={product.id} product={product} onAdd={onAdd} isWishlisted={wishlistIds.has(product.id)} onToggleWishlist={onToggleWishlist} />
           )}</div>
           <div className="pagination">
             <button disabled={!meta.previous} onClick={() => setPage((value) => value - 1)}>← Previous</button>
