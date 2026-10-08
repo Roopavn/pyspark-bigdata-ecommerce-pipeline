@@ -13,12 +13,12 @@ function fallbackImage(product) {
     "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=900&q=85";
 }
 
-export default function ProductCard({ product, onAdd }) {
+export default function ProductCard({ product, onAdd, isWishlisted, onToggleWishlist }) {
   const image = product.image_url || fallbackImage(product);
 
   return (
     <article className="product-card">
-      <Link to={`/products/${product.id}`} className="product-image-link">
+      <div className="product-image-wrap"><Link to={`/products/${product.id}`} className="product-image-link">
         <img className="product-image" src={image} alt={product.name} loading="lazy" />
       </Link>
       <div className="product-card-body">
