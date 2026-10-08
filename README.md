@@ -332,6 +332,60 @@ The JSON watermark store is intentionally simple for local development. In a pro
 
  Incremental ingestion using timestamps/high-water marks is the next step.
 
+## Phase 8 — Incremental Silver and Gold
+
+Phase 8 processes the current incremental Bronze batch without rebuilding the entire analytical pipeline.
+
+### Incremental Silver
+
+The incoming `orders` batch is cleaned and merged into the existing Silver orders dataset using `id` as the business key.
+
+When an order appears in both existing Silver and the incoming batch, the record with the latest `ordered_at` wins. This makes retries idempotent and demonstrates an upsert-style pattern on Parquet.
+
+Run:
+
+    python -m src.pipelines.incremental_silver_pipeline --incoming-dir data/bronze --silver-dir data/silver
+
+### Incremental Gold
+
+The current incremental order batch is enriched with the existing Silver customer and payment dimensions, then written as incremental Gold metrics.
+
+Run:
+
+    python -m src.pipelines.incremental_gold_pipeline --incoming-dir data/bronze --silver-dir data/silver --gold-dir data/gold
+
+Outputs:
+
+    data/gold/
+      incremental_revenue/
+      incremental_customer_spending/
+
+### Why idempotency matters
+
+A production pipeline can retry a failed batch. If the same records are simply appended every time, analytics can double-count revenue.
+
+This implementation uses:
+
+    order id
+        ↓
+    union existing + incoming
+        ↓
+    row_number() over id ordered by ordered_at DESC
+        ↓
+    keep latest version
+        ↓
+    overwrite Silver
+
+For large production datasets, rewriting an entire Parquet dataset is not ideal. Table formats such as Delta Lake or Apache Iceberg provide transactional MERGE/upsert capabilities and are better suited for large-scale incremental workloads.
+
+### Late-arriving and changed records
+
+A timestamp watermark identifies records within a time window, while the Silver merge handles repeated order IDs. In a production pipeline, a small overlap window plus deduplication is commonly used so late-arriving records are not missed.
+
+### Phase 8 limitation
+
+The incremental Gold outputs are batch-level metrics. They are not yet the final cumulative Gold tables. The next dashboard phase will introduce a serving strategy for cumulative analytics and expose the metrics through Django APIs.
+
 ## Why Parquet?
 
 Parquet is used for analytical storage because it is columnar, compressed, Spark-compatible and efficient for analytical scans.
