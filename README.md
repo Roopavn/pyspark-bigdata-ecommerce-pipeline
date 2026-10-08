@@ -92,6 +92,28 @@ Dashboard:
 http://localhost:5173
 ```
 
+## E-commerce domain
+
+The Django application now models the core transaction flow:
+
+```
+Customer -> Order -> OrderItem -> Product -> Category
+                    |
+                    v
+                  Payment
+```
+
+REST endpoints:
+
+- `/api/customers/`
+- `/api/categories/`
+- `/api/products/`
+- `/api/orders/`
+- `/api/payments/`
+- `/api/dashboard/`
+
+The Django models are intentionally designed as the operational/application layer. PySpark will consume exported order, item, product, customer, and payment data and build scalable Bronze/Silver/Gold analytics without putting heavy analytical processing into Django.
+
 ## Analytics planned
 
 - Daily/monthly revenue
