@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, useParams } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import { api } from "./services/api";
 import Home from "./pages/Home";
@@ -67,6 +67,6 @@ export default function App() {
 }
 
 function ProductRoute({ products, onAdd }) {
-  const id = window.location.pathname.split("/").pop();
+  const { id } = useParams();
   return <ProductDetails product={products.find((item) => String(item.id) === id)} onAdd={onAdd} />;
 }
