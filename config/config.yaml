@@ -1,0 +1,17 @@
+spark:
+  app_name: "pyspark-bigdata-ecommerce-pipeline"
+  master: "local[*]"
+  shuffle_partitions: 8
+
+paths:
+  raw: "data/raw"
+  bronze: "data/bronze"
+  silver: "data/silver"
+  gold: "data/gold"
+
+source:
+  type: "csv"
+  orders: "data/raw/orders.csv"
+  customers: "data/raw/customers.csv"
+  products: "data/raw/products.csv"
+  payments: "data/raw/payments.csv"
