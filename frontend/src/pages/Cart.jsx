@@ -13,12 +13,12 @@ export default function Cart({ cart, onChangeQuantity, onRemove }) {
           <div className="cart-items">
             {cart.map((item) => (
               <article className="cart-item" key={item.id}>
-                <div className="cart-thumb">{item.category_name || "Item"}</div>
+                <Link to={`/products/${item.id}`}><img className="cart-thumb" src={item.image_url} alt={item.name} /></Link>
                 <div className="cart-info"><h3>{item.name}</h3><span>₹{Number(item.price).toLocaleString()} each</span></div>
                 <div className="quantity">
                   <button onClick={() => onChangeQuantity(item.id, item.quantity - 1)}>−</button>
                   <strong>{item.quantity}</strong>
-                  <button onClick={() => onChangeQuantity(item.id, item.quantity + 1)}>+</button>
+                  <button disabled={item.quantity >= item.stock_quantity} onClick={() => onChangeQuantity(item.id, item.quantity + 1)}>+</button>
                 </div>
                 <strong>₹{(Number(item.price) * item.quantity).toLocaleString()}</strong>
                 <button className="remove-button" onClick={() => onRemove(item.id)}>Remove</button>
