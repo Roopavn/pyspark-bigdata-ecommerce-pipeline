@@ -1,56 +1,72 @@
-import { useCallback, useEffect, useState } from "react";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { useEffect, useState } from "react";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import Navbar from "./components/Navbar";
+import { api } from "./services/api";
+import Home from "./pages/Home";
+import Products from "./pages/Products";
+import ProductDetails from "./pages/ProductDetails";
+import Cart from "./pages/Cart";
+import Analytics from "./pages/Analytics";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
-const emptyDashboard = { revenue: 0, orders: 0, customers: 0, average_order_value: 0, daily_metrics: [] };
+function listData(value) {
+  return Array.isArray(value) ? value : value?.results || [];
+}
 
 export default function App() {
-  const [data, setData] = useState(emptyDashboard);
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [cart, setCart] = useState(() => JSON.parse(localStorage.getItem("shop-spark-cart") || "[]"));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const loadDashboard = useCallback(async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const response = await fetch(`${API_URL}/dashboard/`);
-      if (!response.ok) throw new Error(`Dashboard API returned ${response.status}`);
-      setData(await response.json());
-    } catch (err) {
-      setError(err.message || "Unable to load dashboard");
-    } finally {
-      setLoading(false);
-    }
+  useEffect(() => {
+    Promise.all([api.products(), api.categories()])
+      .then(([productData, categoryData]) => {
+        setProducts(listData(productData));
+        setCategories(listData(categoryData));
+      })
+      .catch((err) => setError(err.message || "Unable to load store data"))
+      .finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => { loadDashboard(); }, [loadDashboard]);
+  useEffect(() => {
+    localStorage.setItem("shop-spark-cart", JSON.stringify(cart));
+  }, [cart]);
+
+  const addToCart = (product) => {
+    setCart((current) => {
+      const existing = current.find((item) => item.id === product.id);
+      if (existing) return current.map((item) => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item);
+      return [...current, { ...product, quantity: 1 }];
+    });
+  };
+
+  const changeQuantity = (id, quantity) => {
+    if (quantity <= 0) return setCart((current) => current.filter((item) => item.id !== id));
+    setCart((current) => current.map((item) => item.id === id ? { ...item, quantity } : item));
+  };
+
+  const removeFromCart = (id) => setCart((current) => current.filter((item) => item.id !== id));
 
   return (
-    <main className="dashboard">
-      <header>
-        <p className="eyebrow">PySpark Big Data Project</p>
-        <h1>E-Commerce Analytics</h1>
-        <p>React → Django REST → PostgreSQL → PySpark Gold data</p>
-        <button onClick={loadDashboard} disabled={loading}>{loading ? "Refreshing..." : "Refresh dashboard"}</button>
-      </header>
-      {error && <p role="alert" className="error">{error}</p>}
-      <section className="cards">
-        <article><span>Revenue</span><strong>₹{Number(data.revenue).toLocaleString()}</strong></article>
-        <article><span>Orders</span><strong>{Number(data.orders).toLocaleString()}</strong></article>
-        <article><span>Customers</span><strong>{Number(data.customers).toLocaleString()}</strong></article>
-        <article><span>Average Order Value</span><strong>₹{Number(data.average_order_value).toLocaleString()}</strong></article>
-      </section>
-      <section className="panel">
-        <h2>Daily Revenue</h2>
-        <div className="chart">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data.daily_metrics}>
-              <XAxis dataKey="date" /><YAxis /><Tooltip />
-              <Line type="monotone" dataKey="revenue" strokeWidth={2} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </section>
-    </main>
+    <BrowserRouter>
+      <Navbar cartCount={cart.reduce((sum, item) => sum + item.quantity, 0)} />
+      {error && <div className="global-error">{error}</div>}
+      {loading ? <div className="loading">Loading store...</div> : (
+        <Routes>
+          <Route path="/" element={<Home products={products} />} />
+          <Route path="/products" element={<Products products={products} categories={categories} onAdd={addToCart} />} />
+          <Route path="/products/:id" element={<ProductRoute products={products} onAdd={addToCart} />} />
+          <Route path="/cart" element={<Cart cart={cart} onChangeQuantity={changeQuantity} onRemove={removeFromCart} />} />
+          <Route path="/analytics" element={<Analytics />} />
+          <Route path="*" element={<Home products={products} />} />
+        </Routes>
+      )}
+    </BrowserRouter>
   );
+}
+
+function ProductRoute({ products, onAdd }) {
+  const id = window.location.pathname.split("/").pop();
+  return <ProductDetails product={products.find((item) => String(item.id) === id)} onAdd={onAdd} />;
 }
