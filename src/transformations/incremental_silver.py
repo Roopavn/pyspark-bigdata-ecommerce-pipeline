@@ -1,5 +1,6 @@
 from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
+from pyspark.sql.window import Window
 
 
 def prepare_incremental_orders(df: DataFrame) -> DataFrame:
@@ -29,12 +30,7 @@ def merge_incremental_orders(
 
     combined = existing.unionByName(incoming, allowMissingColumns=True)
 
-    window = (
-        __import__("pyspark.sql.window", fromlist=["Window"])
-        .Window
-        .partitionBy("id")
-        .orderBy(F.col("ordered_at").desc_nulls_last())
-    )
+    window = Window.partitionBy("id").orderBy(F.col("ordered_at").desc_nulls_last())
 
     return (
         combined
