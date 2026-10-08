@@ -212,6 +212,63 @@ data/gold/
   repeat_customers/
 ```
 
+## Phase 6 — PostgreSQL + Spark JDBC ingestion
+
+The Phase 6 ingestion path reads the operational PostgreSQL database directly through Spark JDBC and writes Bronze Parquet datasets.
+
+### JDBC architecture
+
+    Django
+       ↓
+    PostgreSQL
+       ↓
+    Spark JDBC
+       ↓
+    Partitioned parallel reads
+       ↓
+    Bronze Parquet
+
+The pipeline reads the six commerce tables:
+
+- `commerce_customer`
+- `commerce_category`
+- `commerce_product`
+- `commerce_order`
+- `commerce_orderitem`
+- `commerce_payment`
+
+### Environment
+
+Copy the values from `.env.example` into your local environment. Do not commit real database passwords.
+
+Required variables:
+
+    JDBC_URL=jdbc:postgresql://localhost:5432/ecommerce
+    DB_USER=ecommerce
+    DB_PASSWORD=ecommerce
+
+### Run PostgreSQL JDBC ingestion
+
+Start PostgreSQL first:
+
+    docker compose up -d db
+
+Run the Django migrations so the commerce tables exist, then execute:
+
+    python -m src.pipelines.postgres_bronze_pipeline --output-dir data/bronze --num-partitions 4
+
+The pipeline discovers the minimum and maximum `id` values for each table and uses those bounds to create parallel JDBC read partitions.
+
+### Why partition JDBC reads?
+
+With one partition, Spark can effectively perform a serial database read. With multiple partitions, Spark can create multiple JDBC connections and read different ranges of the partition column concurrently.
+
+For example, if `commerce_order.id` ranges from 1 to 1,000,000 and four partitions are used, Spark can divide the range into multiple read tasks. This can improve throughput for large tables, subject to database capacity.
+
+`numPartitions` is also a concurrency control: increasing it is not automatically faster because it increases database connections and load.
+
+The initial full ingestion uses integer primary keys as partition columns. Incremental ingestion using timestamps/high-water marks is the next step.
+
 ## Why Parquet?
 
 Parquet is used for analytical storage because it is columnar, compressed, Spark-compatible and efficient for analytical scans.
@@ -293,7 +350,7 @@ python -m src.pipelines.gold_pipeline
 - [x] Silver enrichment
 - [x] Gold business analytics
 - [x] Spark SQL analytics
-- [ ] PostgreSQL/JDBC ingestion
+- [x] PostgreSQL/JDBC ingestion
 - [ ] Incremental processing
 - [ ] Dashboard integration with Gold datasets
 - [ ] PySpark tests in CI
@@ -303,4 +360,4 @@ python -m src.pipelines.gold_pipeline
 
 ## Status
 
-🚧 **Phase 5 in progress:** Bronze, Silver and Gold layers are implemented. Next: connect PostgreSQL through Spark JDBC, add incremental processing, and expose Gold metrics through the Django/React dashboard.
+🚧 **Phase 6 in progress:** Bronze, Silver and Gold layers are implemented and PostgreSQL/JDBC ingestion is available. Next: add incremental processing with a high-water mark, then integrate Gold metrics with the Django/React dashboard.
