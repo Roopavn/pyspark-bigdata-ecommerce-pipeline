@@ -1,13 +1,5 @@
 import { Link } from "react-router-dom";
-
-const iconFor = (category = "") => {
-  const value = category.toLowerCase();
-  if (value.includes("mobile")) return "📱";
-  if (value.includes("laptop")) return "💻";
-  if (value.includes("home")) return "🏠";
-  if (value.includes("access")) return "🎧";
-  return "✨";
-};
+import { imageForProduct } from "../services/productImages";
 
 export default function ProductDetails({ product, onAdd }) {
   if (!product) return <main className="section"><div className="empty-state"><h2>Product not found</h2><Link className="back-link" to="/products">Back to products</Link></div></main>;
@@ -15,7 +7,7 @@ export default function ProductDetails({ product, onAdd }) {
     <main className="section">
       <Link to="/products" className="back-link">← Back to products</Link>
       <section className="detail-card">
-        <div className="detail-image"><span>{iconFor(product.category_name)}</span></div>
+        <div className="detail-image"><img src={imageForProduct(product)} alt={product.name} /></div>
         <div className="detail-content">
           <p className="category-label">{product.category_name}</p><h1>{product.name}</h1><p className="sku">SKU: {product.sku}</p>
           <h2>₹{Number(product.price).toLocaleString("en-IN")}</h2>
