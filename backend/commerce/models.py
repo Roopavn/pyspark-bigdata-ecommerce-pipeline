@@ -30,6 +30,7 @@ class Product(models.Model):
     sku = models.CharField(max_length=50, unique=True)
     price = models.DecimalField(max_digits=12, decimal_places=2)
     stock_quantity = models.PositiveIntegerField(default=0)
+    image_url = models.URLField(max_length=1000, blank=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -90,7 +91,7 @@ class Payment(models.Model):
     order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name="payment")
     transaction_id = models.CharField(max_length=100, unique=True)
     amount = models.DecimalField(max_digits=14, decimal_places=2)
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    status = models.CharField(max_length=20, choices=Payment.Status.choices, default=Payment.Status.PENDING)
     paid_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
