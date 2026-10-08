@@ -570,12 +570,12 @@ python -m src.pipelines.gold_pipeline
 - [x] Spark SQL analytics
 - [x] PostgreSQL/JDBC ingestion
 - [x] Incremental processing
-- [ ] Dashboard integration with Gold datasets
-- [ ] PySpark tests in CI
-- [ ] GitHub Actions CI/CD
-- [ ] Dockerized end-to-end environment
+- [x] Dashboard integration with Gold datasets
+- [x] PySpark tests in CI
+- [x] GitHub Actions CI/CD
+- [x] Dockerized end-to-end environment
 - [ ] Cloud deployment
 
 ## Status
 
-🚧 **Phase 7 in progress:** Bronze, Silver and Gold layers are implemented, PostgreSQL/JDBC ingestion is available, and timestamp-based incremental processing is implemented for orders. Next: integrate incremental Gold metrics with the Django/React dashboard.
+🚧 **Phase 10 in progress:** The platform now includes Bronze/Silver/Gold processing, incremental ingestion, dashboard serving, automated PySpark/Django checks, and Docker build automation. Next: cloud deployment and production orchestration.
