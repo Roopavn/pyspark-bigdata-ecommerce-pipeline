@@ -332,6 +332,48 @@ The JSON watermark store is intentionally simple for local development. In a pro
 
  Incremental ingestion using timestamps/high-water marks is the next step.
 
+## Phase 9 — Gold to Dashboard Integration
+
+Phase 9 adds the serving layer between PySpark Gold analytics and the application dashboard.
+
+### Architecture
+
+    PostgreSQL source
+          ↓
+       PySpark
+          ↓
+     Gold Parquet
+          ↓
+     Spark JDBC
+          ↓
+    PostgreSQL serving table
+          ↓
+      Django REST API
+          ↓
+       React UI
+
+The current serving table is the existing Django analytics_dailymetric table. The Spark publishing job reads data/gold/daily_revenue and publishes the daily metrics to PostgreSQL.
+
+Run:
+
+    python -m src.pipelines.gold_to_postgres --input-dir data/gold
+
+The job uses truncate=true with JDBC overwrite so the Django table remains the serving copy of the latest Gold daily metrics.
+
+The dashboard API now exposes:
+- total revenue
+- total orders
+- total customers
+- average order value
+- daily revenue series
+
+The React dashboard adds:
+- four KPI cards
+- API loading/error handling
+- manual refresh
+- daily revenue chart
+
+This is a portfolio-friendly serving pattern. In production, the Gold-to-serving load would normally be orchestrated by Airflow, Databricks Workflows, Azure Data Factory, or another scheduler, and the serving database would be protected by deployment-specific credentials and least-privilege access.
 ## Phase 8 — Incremental Silver and Gold
 
 Phase 8 processes the current incremental Bronze batch without rebuilding the entire analytical pipeline.
