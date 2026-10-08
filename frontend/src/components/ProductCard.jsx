@@ -1,18 +1,12 @@
 import { Link } from "react-router-dom";
-
-const iconFor = (category = "") => {
-  const value = category.toLowerCase();
-  if (value.includes("mobile")) return "📱";
-  if (value.includes("laptop")) return "💻";
-  if (value.includes("home")) return "🏠";
-  if (value.includes("access")) return "🎧";
-  return "✨";
-};
+import { imageForProduct } from "../services/productImages";
 
 export default function ProductCard({ product, onAdd }) {
   return (
     <article className="product-card">
-      <div className="product-image"><span>{iconFor(product.category_name)}</span></div>
+      <div className="product-image">
+        <img src={imageForProduct(product)} alt={product.name} loading="lazy" />
+      </div>
       <div className="product-card-body">
         <p className="category-label">{product.category_name || "E-Commerce"}</p>
         <h3>{product.name}</h3>
