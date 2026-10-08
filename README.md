@@ -267,7 +267,70 @@ For example, if `commerce_order.id` ranges from 1 to 1,000,000 and four partitio
 
 `numPartitions` is also a concurrency control: increasing it is not automatically faster because it increases database connections and load.
 
-The initial full ingestion uses integer primary keys as partition columns. Incremental ingestion using timestamps/high-water marks is the next step.
+The initial full ingestion uses integer primary keys as partition columns.
+
+## Phase 7 — Incremental processing with a high-water mark
+
+Phase 7 adds timestamp-based incremental ingestion for the PostgreSQL `commerce_order` table.
+
+### Incremental architecture
+
+    PostgreSQL
+       ↓
+    Read last watermark
+       ↓
+    Find current source MAX(ordered_at)
+       ↓
+    Read only:
+    last_watermark < ordered_at <= current_watermark
+       ↓
+    Partitioned Spark JDBC read
+       ↓
+    Append Bronze Parquet
+       ↓
+    Update watermark only after successful ingestion
+
+The pipeline stores the last successful watermark in:
+
+    data/state/watermarks.json
+
+This state file is runtime state and should not contain secrets.
+
+### Bootstrap the watermark
+
+Because Phase 6 already performs the initial full load, bootstrap the incremental pipeline without re-ingesting existing orders:
+
+    python -m src.pipelines.incremental_postgres_bronze_pipeline --bootstrap
+
+This records the current maximum `ordered_at` as the starting high-water mark.
+
+### Run incremental ingestion
+
+After new orders are inserted into PostgreSQL:
+
+    python -m src.pipelines.incremental_postgres_bronze_pipeline --output-dir data/bronze --state-file data/state/watermarks.json --num-partitions 4
+
+Only orders newer than the previous watermark and up to the current source maximum are read.
+
+### Why use a timestamp watermark?
+
+An integer `id` is useful for append-only tables, but a timestamp is often a better incremental boundary for transactional data because it represents when the business event occurred. In production, timestamp-based ingestion is commonly combined with deduplication and a small overlap window to handle late-arriving or corrected records.
+
+This portfolio implementation keeps the pattern explicit:
+
+1. Read the last successful watermark.
+2. Capture the current source maximum.
+3. Extract the bounded timestamp window.
+4. Write the incremental batch.
+5. Advance the watermark only after the write succeeds.
+
+If the Spark job fails before the watermark update, the same window can be retried instead of losing records.
+
+### Important production consideration
+
+The JSON watermark store is intentionally simple for local development. In a production platform, the same state would normally live in a durable control table or orchestration metadata store, with audit information such as pipeline name, dataset, run ID, start/end time, row count and status.
+
+ Incremental ingestion using timestamps/high-water marks is the next step.
 
 ## Why Parquet?
 
@@ -351,7 +414,7 @@ python -m src.pipelines.gold_pipeline
 - [x] Gold business analytics
 - [x] Spark SQL analytics
 - [x] PostgreSQL/JDBC ingestion
-- [ ] Incremental processing
+- [x] Incremental processing
 - [ ] Dashboard integration with Gold datasets
 - [ ] PySpark tests in CI
 - [ ] GitHub Actions CI/CD
@@ -360,4 +423,4 @@ python -m src.pipelines.gold_pipeline
 
 ## Status
 
-🚧 **Phase 6 in progress:** Bronze, Silver and Gold layers are implemented and PostgreSQL/JDBC ingestion is available. Next: add incremental processing with a high-water mark, then integrate Gold metrics with the Django/React dashboard.
+🚧 **Phase 7 in progress:** Bronze, Silver and Gold layers are implemented, PostgreSQL/JDBC ingestion is available, and timestamp-based incremental processing is implemented for orders. Next: integrate incremental Gold metrics with the Django/React dashboard.
