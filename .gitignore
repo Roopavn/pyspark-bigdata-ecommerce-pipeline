@@ -19,3 +19,5 @@ data/gold/*
 !data/gold/.gitkeep
 *.log
 .DS_Store
+data/state/*
+!data/state/.gitkeep
