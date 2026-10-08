@@ -1,0 +1,7 @@
+pyspark>=4.0,<5
+pandas>=2.2,<3
+requests>=2.32,<3
+python-dotenv>=1.0,<2
+SQLAlchemy>=2.0,<3
+psycopg2-binary>=2.9,<3
+pytest>=8.0,<9
