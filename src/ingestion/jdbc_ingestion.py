@@ -20,16 +20,6 @@ def read_jdbc_table(
     When partitioning arguments are supplied, Spark creates parallel JDBC
     connections and reads different ranges of the partition column.
     """
-    reader = (
-        spark.read.format("jdbc")
-        .option("url", jdbc_url)
-        .option("dbtable", table)
-        .option("user", user)
-        .option("password", password)
-        .option("driver", POSTGRES_DRIVER)
-        .option("fetchsize", 10000)
-    )
-
     partition_args = (
         partition_column,
         lower_bound,
@@ -48,11 +38,14 @@ def read_jdbc_table(
         if lower_bound >= upper_bound:
             raise ValueError("lower_bound must be smaller than upper_bound")
 
-        reader = (
-            reader.option("partitionColumn", partition_column)
-            .option("lowerBound", lower_bound)
-            .option("upperBound", upper_bound)
-            .option("numPartitions", num_partitions)
-        )
+    reader = (
+        spark.read.format("jdbc")
+        .option("url", jdbc_url)
+        .option("dbtable", table)
+        .option("user", user)
+        .option("password", password)
+        .option("driver", POSTGRES_DRIVER)
+        .option("fetchsize", 10000)
+    )
 
     return reader.load()
