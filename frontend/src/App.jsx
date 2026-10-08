@@ -5,7 +5,8 @@ import { api } from "./services/api";
 import Home from "./pages/Home";
 import Products from "./pages/Products";
 import ProductDetails from "./pages/ProductDetails";
-import Cart from "./pages/Cart";\nimport Wishlist from "./pages/Wishlist";
+import Cart from "./pages/Cart";
+import Wishlist from "./pages/Wishlist";
 import Analytics from "./pages/Analytics";
 
 function listData(value) {
