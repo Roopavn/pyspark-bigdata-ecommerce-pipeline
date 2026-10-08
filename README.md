@@ -70,6 +70,7 @@ src/
   schemas/
   ingestion/
   transformations/
+  quality/
   analytics/
   pipelines/
 
@@ -79,7 +80,6 @@ data/
   silver/
   gold/
 
-config/
 docker-compose.yml
 requirements.txt
 ```
@@ -108,7 +108,7 @@ The Django models are the **operational/application layer**. PySpark consumes ex
 
 ## Phase 3 — PySpark Bronze ingestion
 
-Phase 3 introduces the first real data-engineering layer.
+Phase 3 introduced the first real data-engineering layer.
 
 ### Source datasets
 
@@ -133,11 +133,7 @@ Each dataset has a defined `StructType` schema in:
 src/schemas/ecommerce.py
 ```
 
-This is important in production because schema inference can produce inconsistent types when source files change.
-
 ### Bronze processing
-
-Run:
 
 ```bash
 python -m src.pipelines.bronze_pipeline --input-dir data/raw --output-dir data/bronze
@@ -152,19 +148,62 @@ The pipeline:
 5. Writes each dataset to Parquet under `data/bronze/<dataset>/`.
 6. Stops Spark cleanly.
 
-Example:
+Bronze is intentionally close to the source data. Cleansing and business transformations happen in Silver.
+
+## Phase 4 — Silver cleansing and enrichment
+
+The Silver layer converts Bronze snapshots into trusted analytical datasets.
+
+### Transformations
+
+- Remove duplicate records by business keys.
+- Normalize strings and status values.
+- Standardize product SKUs.
+- Cast numeric fields to analytical types.
+- Convert order timestamps into `order_date` and `order_month`.
+- Validate order-item quantity and pricing.
+- Detect subtotal mismatches.
+- Enrich order items with product and category information.
+- Enrich orders with customer and payment information.
+
+### Data quality
+
+Quality checks are implemented in:
 
 ```
-data/raw/orders.csv
-        ↓
-PySpark explicit schema
-        ↓
-Bronze DataFrame
-        ↓
-data/bronze/orders/*.parquet
+src/quality/data_quality.py
 ```
 
-Bronze is intentionally close to the source data. Cleansing and business transformations will be introduced in the Silver layer.
+Current checks include:
+
+- Invalid quantity or unit price
+- Subtotal calculation mismatches
+- Duplicate detection helpers
+- Null-count helper
+
+### Silver pipeline
+
+Run after Bronze has been generated:
+
+```bash
+python -m src.pipelines.silver_pipeline --input-dir data/bronze --output-dir data/silver
+```
+
+The pipeline produces:
+
+```
+data/silver/
+  customers/
+  categories/
+  products/
+  orders/
+  order_items/
+  payments/
+  order_item_enriched/
+  order_enriched/
+```
+
+This creates the foundation for the Gold business analytics layer.
 
 ## Why Parquet?
 
@@ -210,44 +249,9 @@ Parquet is used for analytical storage because it is:
 
 This project is intentionally developed using **Generative AI tools, including ChatGPT, as part of the software engineering workflow**.
 
-ChatGPT is used through structured prompting to assist with:
+ChatGPT is used through structured prompting to assist with architecture, PySpark pipeline design, Django APIs, SQL, code generation, refactoring, debugging, tests, documentation, CI/CD, performance optimization and best-practice review.
 
-- Project architecture and technology selection
-- PySpark pipeline design
-- Django REST API development
-- Database and data-model design
-- Spark SQL and SQL development
-- Code generation and refactoring
-- Debugging and troubleshooting
-- Unit-test generation
-- Documentation and README development
-- CI/CD workflow development
-- Big Data implementation guidance
-- Performance optimization and best-practice review
-
-The development workflow is:
-
-```
-Requirement
-    ↓
-Structured Prompt
-    ↓
-ChatGPT / Generative AI
-    ↓
-Proposed Code / Architecture
-    ↓
-Developer Review
-    ↓
-Testing & Validation
-    ↓
-Refactoring / Optimization
-    ↓
-Integrated Implementation
-```
-
-AI is used as a **development productivity and engineering-assistance tool**. The developer remains responsible for understanding the implementation, reviewing generated code, validating behavior, testing solutions, and making final architecture and engineering decisions.
-
-This demonstrates practical experience with **AI-assisted software engineering and prompt engineering**, alongside traditional Python, Django, SQL and Big Data development.
+The developer remains responsible for understanding the implementation, reviewing generated code, validating behavior, testing solutions, and making final architecture and engineering decisions.
 
 ## Local setup
 
@@ -271,12 +275,6 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-API:
-
-```
-http://localhost:8000/api/dashboard/
-```
-
 ### 3. Start React
 
 ```bash
@@ -285,19 +283,14 @@ npm install
 npm run dev
 ```
 
-Dashboard:
-
-```
-http://localhost:5173
-```
-
-### 4. Run PySpark Bronze ingestion
+### 4. Run PySpark
 
 From the repository root:
 
 ```bash
 pip install -r requirements.txt
 python -m src.pipelines.bronze_pipeline
+python -m src.pipelines.silver_pipeline
 ```
 
 ## Roadmap
@@ -308,17 +301,18 @@ python -m src.pipelines.bronze_pipeline
 - [x] Explicit PySpark schemas
 - [x] Sample source datasets
 - [x] Bronze CSV → Parquet ingestion
-- [ ] Silver cleansing and data-quality layer
+- [x] Silver cleansing and data-quality layer
+- [x] Silver enrichment
 - [ ] Gold business analytics
 - [ ] PostgreSQL/JDBC ingestion
 - [ ] Incremental processing
 - [ ] Spark SQL analytics
 - [ ] Dashboard integration with Gold datasets
-- [ ] PySpark automated tests
+- [ ] PySpark automated tests in CI
 - [ ] GitHub Actions CI/CD
 - [ ] Dockerized end-to-end environment
 - [ ] Cloud deployment
 
 ## Status
 
-🚧 **Phase 3 in progress:** realistic source datasets, explicit PySpark schemas, and Bronze Parquet ingestion are implemented. Next phase: Silver cleansing, validation, enrichment and business transformations.
+🚧 **Phase 4 in progress:** Bronze ingestion is complete and the Silver layer now performs cleansing, data-quality checks, normalization and enrichment. Next: Gold business analytics and Spark SQL.
