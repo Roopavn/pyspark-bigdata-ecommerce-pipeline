@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 
-export default function Navbar({ cartCount }) {
+export default function Navbar({ cartCount, wishlistCount }) {
   return (
     <header className="navbar">
       <div className="nav-inner">
@@ -11,7 +11,7 @@ export default function Navbar({ cartCount }) {
         <nav>
           <NavLink to="/" end>Home</NavLink>
           <NavLink to="/products">Products</NavLink>
-          <NavLink to="/analytics">Analytics</NavLink>
+          <NavLink to="/wishlist">Wishlist <span className="cart-badge">{wishlistCount}</span></NavLink>\n          <NavLink to="/analytics">Analytics</NavLink>
           <NavLink to="/cart" className="cart-link">
             Cart <span className="cart-badge">{cartCount}</span>
           </NavLink>
