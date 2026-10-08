@@ -332,6 +332,65 @@ The JSON watermark store is intentionally simple for local development. In a pro
 
  Incremental ingestion using timestamps/high-water marks is the next step.
 
+## Phase 10 — CI/CD, Docker and Automated Quality Gates
+
+Phase 10 adds repeatable engineering automation around the data platform.
+
+### CI pipeline
+
+GitHub Actions runs on pushes to main/feature branches and pull requests targeting main.
+
+Quality gates:
+- PySpark tests with pytest
+- Django system check
+- Docker builds for Django, React and Spark images
+- Java 17 for Spark tests
+
+Workflow:
+
+    GitHub push / pull request
+             ↓
+       Python + Java setup
+             ↓
+        pytest -q
+             ↓
+       Django check
+             ↓
+       Docker image builds
+             ↓
+       Merge decision
+
+### Docker
+
+Three application images are defined:
+
+- backend/Dockerfile — Django REST API
+- frontend/Dockerfile — Vite production build served by Nginx
+- Dockerfile.spark — PySpark execution image
+
+`docker-compose.ci.yml` provides a PostgreSQL + Django + React container topology for end-to-end local/CI environments.
+
+### Production CI/CD concept
+
+The CI workflow intentionally validates code and builds images but does not automatically deploy to cloud resources. A production deployment stage can later authenticate to a cloud registry using OIDC/workload identity, push immutable image tags, run migrations, and deploy the backend/frontend or trigger the Spark job.
+
+Keeping CI validation separate from deployment reduces the risk of a broken pull request reaching production.
+
+### Recommended production orchestration
+
+    Scheduler / Workflow engine
+              ↓
+       Incremental ingestion
+              ↓
+          Silver / Gold
+              ↓
+       Gold serving load
+              ↓
+       Django API / React
+
+Typical production options include Airflow, Azure Data Factory, Databricks Workflows or GitHub Actions for deployment orchestration.
+
+## Phase 10 — CI/CD, Docker and Automated Quality Gates
 ## Phase 9 — Gold to Dashboard Integration
 
 Phase 9 adds the serving layer between PySpark Gold analytics and the application dashboard.
