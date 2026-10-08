@@ -16,6 +16,8 @@ def test_clean_orders_adds_date_dimensions():
         assert result["status"] == "DELIVERED"
         assert str(result["order_date"]) == "2026-02-01"
         assert result["order_month"] == "2026-02"
+    finally:
+        spark.stop()
 
 
 def test_invalid_order_items_are_detected():
