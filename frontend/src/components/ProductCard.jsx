@@ -9,6 +9,7 @@ function fallbackImage(product) {
     home: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=900&q=85",
     fashion: "https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=900&q=85",
   };
+
   return Object.entries(images).find(([key]) => category.includes(key))?.[1] ||
     "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=900&q=85";
 }
@@ -18,9 +19,20 @@ export default function ProductCard({ product, onAdd, isWishlisted, onToggleWish
 
   return (
     <article className="product-card">
-      <div className="product-image-wrap"><Link to={`/products/${product.id}`} className="product-image-link">
-        <img className="product-image" src={image} alt={product.name} loading="lazy" />
-      </Link>
+      <div className="product-image-wrap">
+        <Link to={`/products/${product.id}`} className="product-image-link">
+          <img className="product-image" src={image} alt={product.name} loading="lazy" />
+        </Link>
+        <button
+          className={`wishlist-button${isWishlisted ? " wishlisted" : ""}`}
+          onClick={() => onToggleWishlist(product)}
+          aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+          title={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+        >
+          {isWishlisted ? "♥" : "♡"}
+        </button>
+      </div>
+
       <div className="product-card-body">
         <p className="category-label">{product.category_name || "E-Commerce"}</p>
         <h3>{product.name}</h3>
