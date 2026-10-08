@@ -1,52 +1,48 @@
-# PySpark Big Data E-Commerce Pipeline
+# PySpark Big Data E-Commerce Platform
 
-End-to-end Big Data engineering project using **Python, PySpark, Spark SQL, PostgreSQL/SQL Server, Parquet, and GitHub Actions**.
+End-to-end e-commerce analytics platform combining **React, Django REST Framework, PostgreSQL, PySpark, Spark SQL, and Parquet**.
 
 ## Architecture
 
 ```
-Online API / CSV / SQL
-        |
-        v
-   Ingestion Layer
-        |
-        v
-      Bronze
-        |
-        v
-      Silver
-        |
-        v
-       Gold
-        |
-        +----> PostgreSQL / SQL Server
-        |
-        +----> Analytics / BI
+React Dashboard
+      |
+      v
+Django REST API
+      |
+      +---- PostgreSQL (application / analytics serving)
+      |
+      v
+PySpark ETL
+      |
+Bronze -> Silver -> Gold
+      |
+      v
+Parquet / SQL
 ```
 
-## Goals
+## Project layers
 
-- Ingest realistic e-commerce data from files, APIs, and relational databases.
-- Process large datasets with PySpark.
-- Build Bronze, Silver, and Gold data layers.
-- Apply cleansing, validation, deduplication, joins, aggregations, and window functions.
-- Optimize Spark jobs using partitioning, caching, and broadcast joins.
-- Store analytical data in Parquet and SQL.
-- Add automated tests and CI/CD.
-- Make the project suitable for production and PySpark/Data Engineer interviews.
-
-## Planned dataset
-
-The initial pipeline will use an e-commerce dataset containing customers, products, orders, order items, and payments. The ingestion layer will be designed so the source can later be replaced by an online API or SQL Server/PostgreSQL database without changing the transformation logic.
+- **React**: dashboard, KPIs, charts and future operational screens.
+- **Django + DRF**: REST APIs and application/business layer.
+- **PostgreSQL**: local development database and serving layer.
+- **PySpark**: ingestion, cleansing, joins, aggregations and scalable analytics.
+- **Parquet**: Bronze/Silver/Gold analytical storage.
+- **GitHub Actions**: automated tests and deployment will be added.
 
 ## Repository structure
 
 ```
-src/
-  ingestion/        # API, CSV and JDBC ingestion
-  transformations/  # Bronze -> Silver transformations
-  analytics/         # Silver -> Gold business metrics
-  common/            # Spark/session/config helpers
+backend/
+  config/
+  analytics/
+  manage.py
+frontend/
+  src/
+pyspark/
+  ingestion/
+  transformations/
+  analytics/
 data/
   raw/
   bronze/
@@ -54,45 +50,62 @@ data/
   gold/
 sql/
 tests/
-notebooks/
-config/
 .github/workflows/
+docker-compose.yml
 ```
 
-## Key analytics
+## Local setup
 
-- Daily and monthly revenue
+### 1. Start PostgreSQL
+
+```bash
+docker compose up -d db
+```
+
+### 2. Start Django
+
+```cd backend
+python -m venv .venv
+# Windows
+.venv\Scripts\activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver
+```
+
+API:
+
+```
+GET http://localhost:8000/api/dashboard/
+```
+
+### 3. Start React
+
+```cd frontend
+npm install
+npm run dev
+```
+
+Dashboard:
+
+```
+http://localhost:5173
+```
+
+## Analytics planned
+
+- Daily/monthly revenue
 - Average order value
-- Top customers
-- Top products
+- Top customers/products
 - Revenue by category
 - Repeat customers
 - Failed payments
 - Customer lifetime value
 
-## Local setup
+## Big Data concepts
 
-```bash
-python -m venv .venv
-# Windows
-.venv\Scripts\activate
-# Linux/macOS
-source .venv/bin/activate
-
-pip install -r requirements.txt
-pytest
-```
-
-Run the pipeline:
-
-```bash
-python -m src.pipeline
-```
-
-## Big Data concepts covered
-
-Spark execution model, lazy evaluation, DAGs, partitions, shuffle, narrow/wide transformations, joins, broadcast joins, window functions, data skew, Parquet, incremental processing, data quality, logging, and CI/CD.
+Spark execution model, lazy evaluation, DAGs, partitions, shuffle, narrow/wide transformations, joins, broadcast joins, window functions, data skew, Parquet, incremental processing, data quality, logging and CI/CD.
 
 ## Status
 
-🚧 Project foundation created. Ingestion, transformations, analytics, SQL integration, tests, and CI/CD will be implemented incrementally.
+🚧 Foundation initialized: Django API, React dashboard, PostgreSQL development service, and PySpark structure. Next: e-commerce domain models, realistic source data, Bronze/Silver/Gold jobs, and API integration with Gold analytics.
