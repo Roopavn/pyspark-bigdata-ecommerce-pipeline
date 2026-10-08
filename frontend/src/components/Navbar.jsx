@@ -4,17 +4,12 @@ export default function Navbar({ cartCount }) {
   return (
     <header className="navbar">
       <div className="nav-inner">
-        <NavLink to="/" className="brand">
-          <span className="brand-mark">E</span>
-          <span>ShopSpark</span>
-        </NavLink>
+        <NavLink to="/" className="brand"><span className="brand-mark">S</span><span>ShopSpark</span></NavLink>
         <nav>
           <NavLink to="/" end>Home</NavLink>
-          <NavLink to="/products">Products</NavLink>
-          <NavLink to="/analytics">Analytics</NavLink>
-          <NavLink to="/cart" className="cart-link">
-            Cart <span className="cart-badge">{cartCount}</span>
-          </NavLink>
+          <NavLink to="/products">Shop</NavLink>
+          <NavLink to="/analytics">Insights</NavLink>
+          <NavLink to="/cart" className="cart-link">Cart <span className="cart-badge">{cartCount}</span></NavLink>
         </nav>
       </div>
     </header>
