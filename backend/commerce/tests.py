@@ -23,10 +23,10 @@ class CommerceAPITest(TestCase):
     def test_products_endpoint(self):
         response = self.client.get("/api/products/")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data["count"], 1)
-        self.assertEqual(response.data["results"][0]["sku"], "LAP-001")
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["sku"], "LAP-001")
 
     def test_customer_endpoint(self):
         response = self.client.get("/api/customers/")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data["results"][0]["email"], "test@example.com")
+        self.assertEqual(response.data[0]["email"], "test@example.com")
