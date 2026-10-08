@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, useParams } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import { api } from "./services/api";
 import Home from "./pages/Home";
@@ -13,18 +13,14 @@ function listData(value) {
 }
 
 export default function App() {
-  const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [cart, setCart] = useState(() => JSON.parse(localStorage.getItem("shop-spark-cart") || "[]"));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    Promise.all([api.products(), api.categories()])
-      .then(([productData, categoryData]) => {
-        setProducts(listData(productData));
-        setCategories(listData(categoryData));
-      })
+    api.categories()
+      .then((categoryData) => setCategories(listData(categoryData)))
       .catch((err) => setError(err.message || "Unable to load store data"))
       .finally(() => setLoading(false));
   }, []);
@@ -36,14 +32,14 @@ export default function App() {
   const addToCart = (product) => {
     setCart((current) => {
       const existing = current.find((item) => item.id === product.id);
-      if (existing) return current.map((item) => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item);
+      if (existing) return current.map((item) => item.id === product.id ? { ...item, quantity: Math.min(item.quantity + 1, product.stock_quantity) } : item);
       return [...current, { ...product, quantity: 1 }];
     });
   };
 
   const changeQuantity = (id, quantity) => {
     if (quantity <= 0) return setCart((current) => current.filter((item) => item.id !== id));
-    setCart((current) => current.map((item) => item.id === id ? { ...item, quantity } : item));
+    setCart((current) => current.map((item) => item.id === id ? { ...item, quantity: Math.min(quantity, item.stock_quantity) } : item));
   };
 
   const removeFromCart = (id) => setCart((current) => current.filter((item) => item.id !== id));
@@ -54,19 +50,18 @@ export default function App() {
       {error && <div className="global-error">{error}</div>}
       {loading ? <div className="loading">Loading store...</div> : (
         <Routes>
-          <Route path="/" element={<Home products={products} />} />
-          <Route path="/products" element={<Products products={products} categories={categories} onAdd={addToCart} />} />
-          <Route path="/products/:id" element={<ProductRoute products={products} onAdd={addToCart} />} />
+          <Route path="/" element={<Home />} />
+          <Route path="/products" element={<Products categories={categories} onAdd={addToCart} />} />
+          <Route path="/products/:id" element={<ProductRoute onAdd={addToCart} />} />
           <Route path="/cart" element={<Cart cart={cart} onChangeQuantity={changeQuantity} onRemove={removeFromCart} />} />
           <Route path="/analytics" element={<Analytics />} />
-          <Route path="*" element={<Home products={products} />} />
+          <Route path="*" element={<Home />} />
         </Routes>
       )}
     </BrowserRouter>
   );
 }
 
-function ProductRoute({ products, onAdd }) {
-  const id = window.location.pathname.split("/").pop();
-  return <ProductDetails product={products.find((item) => String(item.id) === id)} onAdd={onAdd} />;
+function ProductRoute({ onAdd }) {
+  return <ProductDetails onAdd={onAdd} />;
 }
