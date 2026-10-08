@@ -5,7 +5,7 @@ import { api } from "./services/api";
 import Home from "./pages/Home";
 import Products from "./pages/Products";
 import ProductDetails from "./pages/ProductDetails";
-import Cart from "./pages/Cart";
+import Cart from "./pages/Cart";\nimport Wishlist from "./pages/Wishlist";
 import Analytics from "./pages/Analytics";
 
 function listData(value) {
@@ -14,7 +14,7 @@ function listData(value) {
 
 export default function App() {
   const [categories, setCategories] = useState([]);
-  const [cart, setCart] = useState(() => JSON.parse(localStorage.getItem("shop-spark-cart") || "[]"));
+  const [cart, setCart] = useState(() => JSON.parse(localStorage.getItem("shop-spark-cart") || "[]"));\n  const [wishlist, setWishlist] = useState(() => JSON.parse(localStorage.getItem("shop-spark-wishlist") || "[]"));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -42,18 +42,18 @@ export default function App() {
     setCart((current) => current.map((item) => item.id === id ? { ...item, quantity: Math.min(quantity, item.stock_quantity) } : item));
   };
 
-  const removeFromCart = (id) => setCart((current) => current.filter((item) => item.id !== id));
+  const removeFromCart = (id) => setCart((current) => current.filter((item) => item.id !== id));\n  const toggleWishlist = (product) => setWishlist((current) => current.some((item) => item.id === product.id) ? current.filter((item) => item.id !== product.id) : [...current, product]);
 
   return (
     <BrowserRouter>
-      <Navbar cartCount={cart.reduce((sum, item) => sum + item.quantity, 0)} />
+      <Navbar cartCount={cart.reduce((sum, item) => sum + item.quantity, 0)} wishlistCount={wishlist.length} />
       {error && <div className="global-error">{error}</div>}
       {loading ? <div className="loading">Loading store...</div> : (
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/products" element={<Products categories={categories} onAdd={addToCart} />} />
+          <Route path="/products" element={<Products categories={categories} onAdd={addToCart} wishlist={wishlist} onToggleWishlist={toggleWishlist} />} />
           <Route path="/products/:id" element={<ProductRoute onAdd={addToCart} />} />
-          <Route path="/cart" element={<Cart cart={cart} onChangeQuantity={changeQuantity} onRemove={removeFromCart} />} />
+          <Route path="/cart" element={<Cart cart={cart} onChangeQuantity={changeQuantity} onRemove={removeFromCart} />} />\n          <Route path="/wishlist" element={<Wishlist wishlist={wishlist} onToggle={toggleWishlist} onAdd={addToCart} />} />
           <Route path="/analytics" element={<Analytics />} />
           <Route path="*" element={<Home />} />
         </Routes>
