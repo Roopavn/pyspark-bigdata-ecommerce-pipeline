@@ -5,88 +5,46 @@ End-to-end e-commerce analytics platform combining **React, Django REST Framewor
 ## Architecture
 
 ```
-                 Operational Layer
-┌──────────────────────────────────────────────────┐
-│ React Dashboard → Django REST API → PostgreSQL  │
-└─────────────────────────┬────────────────────────┘
-                          │
-                    Extract / Ingest
-                          ↓
-                 PySpark Data Platform
-                          │
-                 Bronze → Silver → Gold
-                          │
-                          ↓
-                  Parquet / SQL
-                          │
-                          ↓
-                    Analytics API
-                          │
-                          ↓
-                   React Dashboard
+React Dashboard → Django REST API → PostgreSQL
+                                  ↓
+                         Extract / Ingest
+                                  ↓
+                         PySpark Platform
+                                  ↓
+                         Bronze → Silver → Gold
+                                  ↓
+                           Analytics API
+                                  ↓
+                           React Dashboard
 ```
 
-The project intentionally separates **transaction processing** from **large-scale analytical processing**. Django/PostgreSQL handles application transactions, while PySpark performs data engineering and analytics.
+Django/PostgreSQL handles application transactions, while PySpark performs scalable data engineering and analytics.
 
 ## Technology Stack
 
-- **Python**
-- **Django + Django REST Framework**
-- **React + Vite**
-- **PostgreSQL**
-- **PySpark + Spark SQL**
-- **Parquet**
-- **Docker**
-- **GitHub Actions**
-- **PyTest**
-- **Recharts**
-- **Generative AI / ChatGPT-assisted development**
+- Python
+- Django + Django REST Framework
+- React + Vite
+- PostgreSQL
+- PySpark + Spark SQL
+- Parquet
+- Docker
+- GitHub Actions
+- PyTest
+- Recharts
+- Generative AI / ChatGPT-assisted development
 
 ## Project layers
 
-- **React**: dashboard, KPIs, charts and future operational screens.
-- **Django + DRF**: REST APIs, business/application layer and transaction models.
-- **PostgreSQL**: operational database and future analytics serving layer.
-- **PySpark**: scalable ingestion, cleansing, joins, aggregations and analytics.
+- **React**: dashboard and visualizations.
+- **Django + DRF**: REST APIs and transaction models.
+- **PostgreSQL**: operational database and analytics serving layer.
+- **PySpark**: scalable ingestion, cleansing, joins and aggregations.
 - **Bronze**: raw, schema-enforced Parquet snapshots.
 - **Silver**: cleansed, validated and enriched datasets.
 - **Gold**: business-ready analytical datasets.
-- **GitHub Actions**: CI/CD automation planned for test and pipeline execution.
-
-## Repository structure
-
-```
-backend/
-  config/
-  analytics/
-  commerce/
-  manage.py
-
-frontend/
-  src/
-
-src/
-  common/
-  schemas/
-  ingestion/
-  transformations/
-  quality/
-  analytics/
-  pipelines/
-
-data/
-  raw/
-  bronze/
-  silver/
-  gold/
-
-docker-compose.yml
-requirements.txt
-```
 
 ## E-commerce domain
-
-The Django application models the core transaction flow:
 
 ```
 Customer -> Order -> OrderItem -> Product -> Category
@@ -104,15 +62,17 @@ REST endpoints:
 - `/api/payments/`
 - `/api/dashboard/`
 
-The Django models are the **operational/application layer**. PySpark consumes exported operational data so heavy joins and aggregations do not run inside the Django request/response path.
+## Phase 3 — Bronze ingestion
 
-## Phase 3 — PySpark Bronze ingestion
+Bronze reads the source CSV datasets using explicit Spark `StructType` schemas and writes Parquet snapshots.
 
-Phase 3 introduced the first real data-engineering layer.
+Run:
 
-### Source datasets
+```bash
+python -m src.pipelines.bronze_pipeline --input-dir data/raw --output-dir data/bronze
+```
 
-Sample e-commerce source data is provided under `data/raw/`:
+Datasets:
 
 - customers
 - categories
@@ -121,75 +81,29 @@ Sample e-commerce source data is provided under `data/raw/`:
 - order_items
 - payments
 
-The sample data is deliberately small for local development, but the ingestion design is intended to scale to millions or billions of records.
-
-### Explicit schemas
-
-The pipeline does **not** rely on Spark `inferSchema` for the e-commerce datasets.
-
-Each dataset has a defined `StructType` schema in:
-
-```
-src/schemas/ecommerce.py
-```
-
-### Bronze processing
-
-```bash
-python -m src.pipelines.bronze_pipeline --input-dir data/raw --output-dir data/bronze
-```
-
-The pipeline:
-
-1. Creates a Spark session.
-2. Reads each CSV with an explicit schema.
-3. Uses `FAILFAST` for invalid source records.
-4. Reports input row counts.
-5. Writes each dataset to Parquet under `data/bronze/<dataset>/`.
-6. Stops Spark cleanly.
-
-Bronze is intentionally close to the source data. Cleansing and business transformations happen in Silver.
-
 ## Phase 4 — Silver cleansing and enrichment
 
-The Silver layer converts Bronze snapshots into trusted analytical datasets.
+Silver transforms Bronze into trusted analytical datasets.
 
-### Transformations
+Implemented:
 
-- Remove duplicate records by business keys.
-- Normalize strings and status values.
-- Standardize product SKUs.
-- Cast numeric fields to analytical types.
-- Convert order timestamps into `order_date` and `order_month`.
-- Validate order-item quantity and pricing.
-- Detect subtotal mismatches.
-- Enrich order items with product and category information.
-- Enrich orders with customer and payment information.
+- Duplicate removal
+- String/status normalization
+- Product SKU normalization
+- Numeric type standardization
+- Order date/month dimensions
+- Order-item validation
+- Subtotal mismatch detection
+- Product/category enrichment
+- Customer/payment enrichment
 
-### Data quality
-
-Quality checks are implemented in:
-
-```
-src/quality/data_quality.py
-```
-
-Current checks include:
-
-- Invalid quantity or unit price
-- Subtotal calculation mismatches
-- Duplicate detection helpers
-- Null-count helper
-
-### Silver pipeline
-
-Run after Bronze has been generated:
+Run:
 
 ```bash
 python -m src.pipelines.silver_pipeline --input-dir data/bronze --output-dir data/silver
 ```
 
-The pipeline produces:
+Outputs:
 
 ```
 data/silver/
@@ -203,29 +117,104 @@ data/silver/
   order_enriched/
 ```
 
-This creates the foundation for the Gold business analytics layer.
+## Phase 5 — Gold business analytics
+
+The Gold layer converts trusted Silver data into business-ready metrics.
+
+### Implemented datasets
+
+**Daily revenue**
+
+- Revenue by day
+- Order count
+- Customer count
+- Average order value
+
+**Monthly revenue**
+
+- Revenue by month
+- Order count
+- Customer count
+- Average order value
+
+**Product sales**
+
+- Units sold
+- Revenue
+- Number of orders
+
+**Category revenue**
+
+- Units sold
+- Revenue
+- Number of orders
+
+**Customer spending**
+
+- Total spend
+- Number of orders
+- Average order value
+- First and last order dates
+
+**Failed payments**
+
+- Failed transaction details
+- Customer information
+- Payment amount
+- Order amount
+
+**Repeat customers**
+
+- Customers with more than one delivered order
+- Total spend
+- Order count
+- Average order value
+
+### Spark SQL
+
+The project also demonstrates Spark SQL by registering Silver DataFrames as temporary views and calculating monthly revenue using SQL:
+
+```sql
+SELECT
+    order_month,
+    ROUND(SUM(total_amount), 2) AS revenue,
+    COUNT(DISTINCT order_id) AS orders,
+    COUNT(DISTINCT customer_id) AS customers,
+    ROUND(
+        SUM(total_amount) / COUNT(DISTINCT order_id),
+        2
+    ) AS average_order_value
+FROM silver_orders
+WHERE order_status = 'DELIVERED'
+GROUP BY order_month
+ORDER BY order_month;
+```
+
+### Gold pipeline
+
+After Silver data exists:
+
+```bash
+python -m src.pipelines.gold_pipeline --input-dir data/silver --output-dir data/gold
+```
+
+Outputs:
+
+```
+data/gold/
+  daily_revenue/
+  monthly_revenue/
+  monthly_revenue_sql/
+  product_sales/
+  category_revenue/
+  customer_spending/
+  failed_payments/
+  repeat_customers/
+```
 
 ## Why Parquet?
 
-Parquet is used for analytical storage because it is:
-
-- Columnar
-- Compressed
-- Efficient for analytical scans
-- Compatible with Spark
-- Suitable for partitioned data lakes
-- More efficient than repeatedly processing CSV files
-
-## Analytics planned
-
-- Daily/monthly revenue
-- Average order value
-- Top customers/products
-- Revenue by category
-- Repeat customers
-- Failed payments
-- Customer lifetime value
-- Customer purchase frequency
+Parquet is used for analytical storage because it is columnar, compressed, Spark-compatible and efficient for analytical scans.
 
 ## Big Data concepts demonstrated
 
@@ -243,25 +232,24 @@ Parquet is used for analytical storage because it is:
 - Data quality validation
 - Incremental processing
 - Logging
+- Spark SQL
 - CI/CD
 
 ## AI-Assisted Development
 
-This project is intentionally developed using **Generative AI tools, including ChatGPT, as part of the software engineering workflow**.
+This project intentionally uses **Generative AI tools, including ChatGPT, as part of the software engineering workflow** for architecture, PySpark design, Django APIs, SQL, code generation, refactoring, debugging, tests, documentation, CI/CD and performance review.
 
-ChatGPT is used through structured prompting to assist with architecture, PySpark pipeline design, Django APIs, SQL, code generation, refactoring, debugging, tests, documentation, CI/CD, performance optimization and best-practice review.
-
-The developer remains responsible for understanding the implementation, reviewing generated code, validating behavior, testing solutions, and making final architecture and engineering decisions.
+The developer remains responsible for reviewing generated code, validating behavior, testing solutions and making final engineering decisions.
 
 ## Local setup
 
-### 1. Start PostgreSQL
+### PostgreSQL
 
 ```bash
 docker compose up -d db
 ```
 
-### 2. Start Django
+### Django
 
 ```bash
 cd backend
@@ -275,7 +263,7 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-### 3. Start React
+### React
 
 ```bash
 cd frontend
@@ -283,14 +271,15 @@ npm install
 npm run dev
 ```
 
-### 4. Run PySpark
+### PySpark
 
-From the repository root:
+From repository root:
 
 ```bash
 pip install -r requirements.txt
 python -m src.pipelines.bronze_pipeline
 python -m src.pipelines.silver_pipeline
+python -m src.pipelines.gold_pipeline
 ```
 
 ## Roadmap
@@ -299,20 +288,19 @@ python -m src.pipelines.silver_pipeline
 - [x] Django + React application
 - [x] E-commerce domain models and APIs
 - [x] Explicit PySpark schemas
-- [x] Sample source datasets
 - [x] Bronze CSV → Parquet ingestion
-- [x] Silver cleansing and data-quality layer
+- [x] Silver cleansing and data quality
 - [x] Silver enrichment
-- [ ] Gold business analytics
+- [x] Gold business analytics
+- [x] Spark SQL analytics
 - [ ] PostgreSQL/JDBC ingestion
 - [ ] Incremental processing
-- [ ] Spark SQL analytics
 - [ ] Dashboard integration with Gold datasets
-- [ ] PySpark automated tests in CI
+- [ ] PySpark tests in CI
 - [ ] GitHub Actions CI/CD
 - [ ] Dockerized end-to-end environment
 - [ ] Cloud deployment
 
 ## Status
 
-🚧 **Phase 4 in progress:** Bronze ingestion is complete and the Silver layer now performs cleansing, data-quality checks, normalization and enrichment. Next: Gold business analytics and Spark SQL.
+🚧 **Phase 5 in progress:** Bronze, Silver and Gold layers are implemented. Next: connect PostgreSQL through Spark JDBC, add incremental processing, and expose Gold metrics through the Django/React dashboard.
