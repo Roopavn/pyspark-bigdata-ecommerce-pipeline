@@ -4,7 +4,6 @@ from pathlib import Path
 
 from src.common.spark_session import create_spark_session
 from src.ingestion.incremental_jdbc import read_incremental_jdbc
-from src.ingestion.jdbc_ingestion import read_jdbc_table
 from src.ingestion.watermark_store import read_watermark, write_watermark
 
 
@@ -51,8 +50,8 @@ def incremental_bounds(
         f"(SELECT MIN({PARTITION_COLUMN}) AS lower_bound, "
         f"MAX({PARTITION_COLUMN}) AS upper_bound "
         f"FROM {TABLE} "
-        f"WHERE {WATERMARK_COLUMN} > TIMESTAMP '{last_watermark}' "
-        f"AND {WATERMARK_COLUMN} <= TIMESTAMP '{current_watermark}') AS bounds"
+        f"WHERE {WATERMARK_COLUMN} > TIMESTAMPTZ '{last_watermark}' "
+        f"AND {WATERMARK_COLUMN} <= TIMESTAMPTZ '{current_watermark}') AS bounds"
     )
     row = (
         spark.read.format("jdbc")
