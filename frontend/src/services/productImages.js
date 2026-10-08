@@ -1,4 +1,4 @@
-const images = {
+const fallbackImages = {
   mobile: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=900&q=85",
   laptop: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=900&q=85",
   audio: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=85",
@@ -8,11 +8,13 @@ const images = {
 };
 
 export function imageForProduct(product = {}) {
+  if (product.image_url) return product.image_url;
+
   const value = `${product.category_name || ""} ${product.name || ""}`.toLowerCase();
-  if (value.includes("mobile") || value.includes("phone")) return images.mobile;
-  if (value.includes("laptop") || value.includes("computer")) return images.laptop;
-  if (value.includes("audio") || value.includes("headphone") || value.includes("earbud")) return images.audio;
-  if (value.includes("home") || value.includes("furniture")) return images.home;
-  if (value.includes("fashion") || value.includes("cloth") || value.includes("shoe")) return images.fashion;
-  return images.default;
+  if (value.includes("mobile") || value.includes("phone")) return fallbackImages.mobile;
+  if (value.includes("laptop") || value.includes("computer")) return fallbackImages.laptop;
+  if (value.includes("audio") || value.includes("headphone") || value.includes("earbud")) return fallbackImages.audio;
+  if (value.includes("home") || value.includes("furniture")) return fallbackImages.home;
+  if (value.includes("fashion") || value.includes("cloth") || value.includes("shoe")) return fallbackImages.fashion;
+  return fallbackImages.default;
 }
